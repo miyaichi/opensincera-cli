@@ -146,13 +146,32 @@ See [API Documentation](docs/API.md) for full field list.
 ```
 opensincera-cli/
 ├── bin/
-│   └── opensincera.js     # CLI entry point
+│   └── opensincera.js           # CLI entry point
 ├── src/
-│   └── index.js           # Core library
+│   └── index.js                 # Core library (OpenSinceraClient)
+├── skill/                       # OpenClaw skill (source)
+│   ├── SKILL.md                 # Skill documentation
+│   ├── README.md                # Skill quick start
+│   ├── scripts/
+│   │   ├── check_publisher.sh   # Single publisher check
+│   │   ├── batch_verify.sh      # Batch verification
+│   │   └── rank_publishers.sh   # Quality ranking
+│   └── examples/
+│       └── sample_domains.txt   # Sample input
 ├── docs/
-│   └── API.md             # API documentation
+│   └── API.md                   # API documentation
+├── INSTALL.md                   # Installation guide
 ├── package.json
 └── README.md
+```
+
+**Installation flow:**
+```
+opensincera-cli/skill/
+    ↓ (npm run install-skill)
+~/.openclaw/workspace/skills/opensincera-cli/
+    ↓ (OpenClaw reads SKILL.md)
+Agent can use scripts and commands
 ```
 
 ### Testing
