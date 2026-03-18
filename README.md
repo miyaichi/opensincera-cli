@@ -187,6 +187,34 @@ opensincera example.com | jq -r '.visit_enabled'
 opensincera nytimes.com | jq -r '{name, domain, status}'
 ```
 
+## OpenClaw Skill
+
+This tool includes an OpenClaw skill for easy integration:
+
+**Location:** `~/.openclaw/workspace/skills/opensincera-cli/`
+
+**Features:**
+- ✅ Publisher verification scripts
+- ✅ Batch processing workflows
+- ✅ Quality-based ranking
+- ✅ Example domains and use cases
+
+**Setup:**
+```bash
+# Install globally
+npm install -g .
+
+# Copy skill to OpenClaw workspace
+cp -r skill/ ~/.openclaw/workspace/skills/opensincera-cli/
+```
+
+**Usage from OpenClaw:**
+- "Check if nytimes.com is verified"
+- "Rank these publishers by quality"
+- "Which domains have more than 100 supply paths?"
+
+See `~/.openclaw/workspace/skills/opensincera-cli/SKILL.md` for full documentation.
+
 ## Comparison: CLI vs MCP Server
 
 ### opensincera-cli (This Tool)
@@ -195,9 +223,10 @@ opensincera nytimes.com | jq -r '{name, domain, status}'
 ✅ Easier debugging  
 ✅ Better for batch operations  
 ✅ Standalone tool  
+✅ OpenClaw skill integration  
 
 ### opensincera-mcp-server
-✅ Better for OpenClaw integration  
+✅ Better for interactive sessions  
 ✅ Standardized tool interface  
 ✅ Version control via MCP  
 

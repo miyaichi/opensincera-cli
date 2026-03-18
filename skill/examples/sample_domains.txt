@@ -1,0 +1,6 @@
+# Sample domains for testing
+nytimes.com
+washingtonpost.com
+google.com
+amazon.com
+cnn.com
