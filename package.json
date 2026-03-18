@@ -8,7 +8,8 @@
     "opensincera": "./bin/opensincera.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install-skill": "cp -r skill/ ~/.openclaw/workspace/skills/opensincera-cli/ && echo 'Skill installed to ~/.openclaw/workspace/skills/opensincera-cli/'"
   },
   "keywords": [
     "opensincera",

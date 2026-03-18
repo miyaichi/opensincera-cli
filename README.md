@@ -189,9 +189,26 @@ opensincera nytimes.com | jq -r '{name, domain, status}'
 
 ## OpenClaw Skill
 
-This tool includes an OpenClaw skill for easy integration:
+This tool includes an OpenClaw skill for easy integration.
 
-**Location:** `~/.openclaw/workspace/skills/opensincera-cli/`
+**Installation:**
+```bash
+# 1. Install CLI globally
+cd ~/workspace/opensincera-cli
+npm install -g .
+
+# 2. Copy skill to OpenClaw workspace
+cp -r skill/ ~/.openclaw/workspace/skills/opensincera-cli/
+
+# 3. Set API key (add to ~/.zshrc for persistence)
+export OPENSINCERA_API_KEY="your-api-key-here"
+```
+
+**Verify installation:**
+```bash
+cd ~/.openclaw/workspace/skills/opensincera-cli
+./scripts/check_publisher.sh nytimes.com
+```
 
 **Features:**
 - ✅ Publisher verification scripts
@@ -199,21 +216,12 @@ This tool includes an OpenClaw skill for easy integration:
 - ✅ Quality-based ranking
 - ✅ Example domains and use cases
 
-**Setup:**
-```bash
-# Install globally
-npm install -g .
-
-# Copy skill to OpenClaw workspace
-cp -r skill/ ~/.openclaw/workspace/skills/opensincera-cli/
-```
-
 **Usage from OpenClaw:**
 - "Check if nytimes.com is verified"
 - "Rank these publishers by quality"
 - "Which domains have more than 100 supply paths?"
 
-See `~/.openclaw/workspace/skills/opensincera-cli/SKILL.md` for full documentation.
+See `skill/SKILL.md` or `~/.openclaw/workspace/skills/opensincera-cli/SKILL.md` for full documentation.
 
 ## Comparison: CLI vs MCP Server
 
