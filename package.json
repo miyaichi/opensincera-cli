@@ -1,0 +1,30 @@
+{
+  "name": "opensincera-cli",
+  "version": "1.0.0",
+  "description": "Command-line tool for querying OpenSincera publisher transparency data",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "opensincera": "./bin/opensincera.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "opensincera",
+    "ads.txt",
+    "sellers.json",
+    "transparency",
+    "publisher",
+    "advertising"
+  ],
+  "author": "Yoshihiko Miyaichi <yoshihiko.miyaichi@pier1.co.jp>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/miyaichi/opensincera-cli.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
