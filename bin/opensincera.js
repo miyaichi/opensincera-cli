@@ -36,6 +36,17 @@ Examples:
 }
 
 /**
+ * Validate domain format
+ * @param {string} domain
+ * @returns {boolean}
+ */
+function isValidDomain(domain) {
+  // Basic domain validation: labels separated by dots, no leading/trailing hyphens
+  const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+  return domainRegex.test(domain);
+}
+
+/**
  * Main execution
  */
 async function main() {
@@ -79,6 +90,11 @@ async function main() {
 
   if (!targetDomain) {
     console.error('Error: Empty domain');
+    process.exit(1);
+  }
+
+  if (!isValidDomain(targetDomain)) {
+    console.error(`Error: Invalid domain format: ${targetDomain}`);
     process.exit(1);
   }
 

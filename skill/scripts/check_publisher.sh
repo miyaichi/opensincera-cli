@@ -7,9 +7,10 @@ if [ -z "$domain" ]; then
   exit 1
 fi
 
-json=$(opensincera "$domain" 2>&1)
+json=$(opensincera "$domain" 2>/tmp/opensincera_err)
 if [ $? -ne 0 ]; then
-  echo "❌ $domain: Not found in OpenSincera"
+  err=$(cat /tmp/opensincera_err)
+  echo "❌ $domain: ${err#Error: }"
   exit 1
 fi
 

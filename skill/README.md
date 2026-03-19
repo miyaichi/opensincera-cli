@@ -6,13 +6,14 @@ OpenClaw skill for querying OpenSincera publisher transparency data.
 
 1. **Install CLI globally:**
    ```bash
-   cd ~/workspace/opensincera-cli
+   git clone https://github.com/miyaichi/opensincera-cli.git
+   cd opensincera-cli
    npm install -g .
    ```
 
 2. **Set API key:**
    ```bash
-   export OPENSINCERA_API_KEY="ec6ab4167ad8fe64adfc"
+   export OPENSINCERA_API_KEY="your-api-key"
    ```
    
    Add to `~/.zshrc` for persistence.
@@ -90,5 +91,5 @@ grep ",true," results.csv
 ## See Also
 
 - [opensincera-cli GitHub](https://github.com/miyaichi/opensincera-cli)
-- [Main Project Documentation](~/workspace/opensincera-cli/README.md)
-- [API Documentation](~/workspace/opensincera-cli/docs/API.md)
+- [Main Project Documentation](../README.md)
+- [API Documentation](../docs/API.md)

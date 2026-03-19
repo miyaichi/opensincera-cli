@@ -54,4 +54,6 @@ echo "✓ Processed $count domains"
 echo "✓ Rankings saved to $output_file"
 echo ""
 echo "Top 5 Publishers:"
-head -5 "$output_file" | awk '{printf "%s\t%-30s\t%s\n", $1, $2, $3}'
+head -5 "$output_file" | while IFS=$'\t' read -r score domain name; do
+  printf "%-8s %-35s %s\n" "$score" "$domain" "$name"
+done

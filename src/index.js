@@ -111,12 +111,25 @@ export function formatCSV(data) {
   const fields = [
     data.domain || data.owner_domain || '',
     data.publisher_id || data.id || '',
-    (data.name || '').replace(/,/g, ';'),
+    data.name || '',
     data.owner_domain || '',
     data.status || '',
     data.visit_enabled ? 'verified' : 'unverified'
   ];
-  return fields.join(',');
+  return fields.map(csvEscape).join(',');
+}
+
+/**
+ * Escape a value for RFC 4180 CSV
+ * @param {string} value
+ * @returns {string}
+ */
+function csvEscape(value) {
+  const str = String(value);
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
 }
 
 /**

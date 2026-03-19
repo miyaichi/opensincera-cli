@@ -6,11 +6,10 @@ Query publisher transparency data from OpenSincera using the `opensincera-cli` c
 
 ## Installation
 
-The tool is available at: `/Users/miyaichi/workspace/opensincera-cli`
-
 To make it globally available:
 ```bash
-cd ~/workspace/opensincera-cli
+git clone https://github.com/miyaichi/opensincera-cli.git
+cd opensincera-cli
 npm install -g .
 ```
 
@@ -18,7 +17,7 @@ npm install -g .
 
 **API Key**: Set `OPENSINCERA_API_KEY` environment variable:
 ```bash
-export OPENSINCERA_API_KEY="ec6ab4167ad8fe64adfc"
+export OPENSINCERA_API_KEY="your-api-key"
 ```
 
 Add to `~/.zshrc` for persistence.
@@ -73,7 +72,7 @@ Check if a domain is in OpenSincera database and verified:
 
 ```bash
 domain="example.com"
-opensincera "$domain" 2>&1 | grep -q "Domain not found" && echo "NOT FOUND" || echo "FOUND"
+if opensincera "$domain" > /dev/null 2>&1; then echo "FOUND"; else echo "NOT FOUND"; fi
 
 # Check verification status
 opensincera "$domain" | jq -r 'if .visit_enabled then "VERIFIED" else "UNVERIFIED" end'
@@ -248,7 +247,7 @@ done > results.csv
 | `avg_ads_in_view` | number | Inventory density |
 | `status` | string | Publisher availability |
 
-See [API Documentation](../../../workspace/opensincera-cli/docs/API.md) for full field list.
+See [API Documentation](../docs/API.md) for full field list.
 
 ## Example Scripts
 
@@ -312,11 +311,11 @@ echo "✓ Results saved to $output_file"
 
 - [opensincera-cli GitHub](https://github.com/miyaichi/opensincera-cli)
 - [OpenSincera Website](https://open.sincera.io)
-- [API Documentation](../../../workspace/opensincera-cli/docs/API.md)
+- [API Documentation](../docs/API.md)
 
 ## Notes
 
 - Always respect rate limits (recommend 1-2 req/sec)
 - Cache results when processing same domains multiple times
 - Verify API key is set: `echo $OPENSINCERA_API_KEY`
-- Local project path: `~/workspace/opensincera-cli`
+- Repository: https://github.com/miyaichi/opensincera-cli
