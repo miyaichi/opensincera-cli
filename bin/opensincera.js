@@ -14,20 +14,25 @@ const API_KEY = process.env.OPENSINCERA_API_KEY;
 function printUsage() {
   console.error(`
 Usage: opensincera <domain> [options]
+       opensincera --id <publisher_id> [options]
 
 Options:
-  --csv          Output in CSV format (default: JSON)
-  --header       Include CSV header (only with --csv)
-  --help, -h     Show this help message
+  --id <id>            Look up publisher by ID instead of domain
+  --device <type>      Filter to device-level metrics: mobile or desktop
+  --csv                Output in CSV format (default: JSON)
+  --header             Include CSV header (only with --csv)
+  --help, -h           Show this help message
 
 Environment Variables:
-  OPENSINCERA_API_KEY    API key (required)
+  OPENSINCERA_API_KEY  API key (required)
 
 Examples:
   opensincera nytimes.com
-  opensincera nytimes.com --csv
-  echo "nytimes.com" | opensincera --csv --header
-  
+  opensincera --id 75
+  opensincera nytimes.com --device mobile
+  opensincera nytimes.com --device desktop --csv --header
+  echo "nytimes.com" | opensincera --csv
+
   # Multiple domains
   for domain in nytimes.com google.com; do
     opensincera $domain --csv
@@ -41,18 +46,33 @@ Examples:
  * @returns {boolean}
  */
 function isValidDomain(domain) {
-  // Basic domain validation: labels separated by dots, no leading/trailing hyphens
   const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
   return domainRegex.test(domain);
+}
+
+/**
+ * Filter JSON output to device-level metrics for the specified device.
+ * Replaces device_level_metrics with the selected device's data under
+ * the key "device_metrics", and adds a "device" field.
+ * @param {object} data - Full API response
+ * @param {string} device - 'mobile' or 'desktop'
+ * @returns {object}
+ */
+function applyDeviceFilter(data, device) {
+  const { device_level_metrics, ...rest } = data;
+  return {
+    ...rest,
+    device,
+    device_metrics: device_level_metrics?.[device] ?? null,
+  };
 }
 
 /**
  * Main execution
  */
 async function main() {
-  // Parse arguments
   const args = process.argv.slice(2);
-  
+
   if (args.includes('--help') || args.includes('-h')) {
     printUsage();
     process.exit(0);
@@ -68,49 +88,69 @@ async function main() {
   // Parse options
   const outputCSV = args.includes('--csv');
   const includeHeader = args.includes('--header');
-  const domain = args.find(arg => !arg.startsWith('--'));
 
-  // Get domain from args or stdin
-  let targetDomain;
-  
-  if (domain) {
-    targetDomain = domain;
-  } else if (!process.stdin.isTTY) {
-    // Read from stdin
-    const stdinBuffer = [];
-    for await (const chunk of process.stdin) {
-      stdinBuffer.push(chunk);
+  const idIndex = args.indexOf('--id');
+  const publisherId = idIndex !== -1 ? args[idIndex + 1] : null;
+
+  const deviceIndex = args.indexOf('--device');
+  const device = deviceIndex !== -1 ? args[deviceIndex + 1] : null;
+
+  if (device && device !== 'mobile' && device !== 'desktop') {
+    console.error(`Error: --device must be "mobile" or "desktop", got: ${device}`);
+    process.exit(1);
+  }
+
+  // Determine lookup target
+  let targetDomain = null;
+
+  if (!publisherId) {
+    const skipValues = new Set([
+      ...(idIndex !== -1 ? [args[idIndex + 1]] : []),
+      ...(deviceIndex !== -1 ? [args[deviceIndex + 1]] : []),
+    ]);
+    const domain = args.find(arg => !arg.startsWith('--') && !skipValues.has(arg));
+
+    if (domain) {
+      targetDomain = domain;
+    } else if (!process.stdin.isTTY) {
+      const stdinBuffer = [];
+      for await (const chunk of process.stdin) {
+        stdinBuffer.push(chunk);
+      }
+      targetDomain = Buffer.concat(stdinBuffer).toString('utf-8').trim();
+    } else {
+      console.error('Error: No domain or --id provided');
+      printUsage();
+      process.exit(1);
     }
-    targetDomain = Buffer.concat(stdinBuffer).toString('utf-8').trim();
-  } else {
-    console.error('Error: No domain provided');
-    printUsage();
-    process.exit(1);
-  }
 
-  if (!targetDomain) {
-    console.error('Error: Empty domain');
-    process.exit(1);
-  }
+    if (!targetDomain) {
+      console.error('Error: Empty domain');
+      process.exit(1);
+    }
 
-  if (!isValidDomain(targetDomain)) {
-    console.error(`Error: Invalid domain format: ${targetDomain}`);
-    process.exit(1);
+    if (!isValidDomain(targetDomain)) {
+      console.error(`Error: Invalid domain format: ${targetDomain}`);
+      process.exit(1);
+    }
   }
 
   // Query API
   try {
     const client = new OpenSinceraClient(API_KEY);
-    const result = await client.getPublisherByDomain(targetDomain);
+    const result = publisherId
+      ? await client.getPublisherById(publisherId)
+      : await client.getPublisherByDomain(targetDomain);
 
     // Output
     if (outputCSV) {
       if (includeHeader) {
-        console.log(getCSVHeader());
+        console.log(getCSVHeader(device));
       }
-      console.log(formatCSV(result));
+      console.log(formatCSV(result, device));
     } else {
-      console.log(JSON.stringify(result, null, 2));
+      const output = device ? applyDeviceFilter(result, device) : result;
+      console.log(JSON.stringify(output, null, 2));
     }
   } catch (error) {
     console.error(`Error: ${error.message}`);

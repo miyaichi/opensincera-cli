@@ -1,6 +1,6 @@
 /**
  * OpenSincera CLI - Core Module
- * 
+ *
  * Query publisher metadata from OpenSincera API.
  */
 
@@ -26,18 +26,16 @@ export class OpenSinceraClient {
   }
 
   /**
-   * Query publisher by domain
-   * @param {string} domain - Publisher domain
-   * @returns {Promise<object>} Publisher metadata
+   * Shared HTTP GET helper
+   * @param {string} path - Request path
+   * @returns {Promise<object>} Parsed JSON response
    */
-  async getPublisherByDomain(domain) {
+  _get(path) {
     return new Promise((resolve, reject) => {
-      const path = `${this.apiPath}?domain=${encodeURIComponent(domain)}`;
-
       const options = {
         hostname: this.baseUrl,
         port: 443,
-        path: path,
+        path,
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -61,7 +59,7 @@ export class OpenSinceraClient {
               reject(new Error(`Failed to parse JSON: ${e.message}`));
             }
           } else if (res.statusCode === 404) {
-            reject(new Error(`Domain not found: ${domain}`));
+            reject(new Error(`Publisher not found`));
           } else if (res.statusCode === 401) {
             reject(new Error('Invalid API key'));
           } else if (res.statusCode === 429) {
@@ -86,6 +84,40 @@ export class OpenSinceraClient {
   }
 
   /**
+   * Query publisher by domain
+   * @param {string} domain - Publisher domain
+   * @returns {Promise<object>} Publisher metadata
+   */
+  async getPublisherByDomain(domain) {
+    const path = `${this.apiPath}?domain=${encodeURIComponent(domain)}`;
+    try {
+      return await this._get(path);
+    } catch (e) {
+      if (e.message === 'Publisher not found') {
+        throw new Error(`Domain not found: ${domain}`);
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Query publisher by ID
+   * @param {string|number} publisherId - Publisher ID
+   * @returns {Promise<object>} Publisher metadata
+   */
+  async getPublisherById(publisherId) {
+    const path = `${this.apiPath}?id=${encodeURIComponent(publisherId)}`;
+    try {
+      return await this._get(path);
+    } catch (e) {
+      if (e.message === 'Publisher not found') {
+        throw new Error(`Publisher ID not found: ${publisherId}`);
+      }
+      throw e;
+    }
+  }
+
+  /**
    * Health check
    * @returns {Promise<boolean>} API availability
    */
@@ -105,9 +137,10 @@ export class OpenSinceraClient {
 /**
  * Format publisher data as CSV
  * @param {object} data - Publisher metadata
+ * @param {string|null} device - 'mobile', 'desktop', or null for overall only
  * @returns {string} CSV formatted string
  */
-export function formatCSV(data) {
+export function formatCSV(data, device = null) {
   const fields = [
     data.domain || data.owner_domain || '',
     data.publisher_id || data.id || '',
@@ -116,6 +149,18 @@ export function formatCSV(data) {
     data.status || '',
     data.visit_enabled ? 'verified' : 'unverified'
   ];
+
+  if (device) {
+    const dm = data.device_level_metrics?.[device] || {};
+    fields.push(
+      device,
+      dm.avg_ads_to_content_ratio ?? '',
+      dm.avg_ad_units_in_view ?? '',
+      dm.average_refresh_rate ?? '',
+      dm.percentage_of_ad_slots_with_refresh ?? ''
+    );
+  }
+
   return fields.map(csvEscape).join(',');
 }
 
@@ -134,8 +179,13 @@ function csvEscape(value) {
 
 /**
  * Get CSV header
+ * @param {string|null} device - 'mobile', 'desktop', or null for overall only
  * @returns {string} CSV header
  */
-export function getCSVHeader() {
-  return 'domain,publisher_id,publisher_name,owner_domain,status,verification_status';
+export function getCSVHeader(device = null) {
+  const base = 'domain,publisher_id,publisher_name,owner_domain,status,verification_status';
+  if (device) {
+    return base + ',device,a2cr,avg_ad_units_in_view,avg_refresh_rate,pct_slots_with_refresh';
+  }
+  return base;
 }
