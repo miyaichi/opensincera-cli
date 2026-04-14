@@ -4,7 +4,8 @@
 
 - Node.js >= 18.0.0
 - npm (comes with Node.js)
-- OpenClaw (for skill integration)
+- Claude Code (for Claude Code integration — optional)
+- OpenClaw (for OpenClaw skill integration — optional)
 
 ## Step 1: Clone Repository
 
@@ -64,7 +65,30 @@ Expected output:
 }
 ```
 
-## Step 5: Install OpenClaw Skill (Optional)
+## Step 5: Install Claude Code Integration (Optional)
+
+If you use [Claude Code](https://claude.ai/code), add the tool documentation to `~/.claude/CLAUDE.md` so Claude Code automatically knows the `opensincera` command and its options:
+
+```bash
+npm run install-claude-code
+```
+
+This appends `skill/CLAUDE.md` to `~/.claude/CLAUDE.md` (creating it if necessary).
+
+**Verify:**
+```bash
+grep -A 3 'opensincera-cli' ~/.claude/CLAUDE.md
+```
+
+Once installed, Claude Code can run `opensincera` commands on your behalf — for example:
+
+> "Check businessinsider.com's mobile ad metrics and compare with desktop"
+
+> "Batch-verify the domains in domains.txt and save results as CSV"
+
+**Note:** `OPENSINCERA_API_KEY` must be set in your environment when running Claude Code sessions. Add it to `~/.zshrc` (Step 3) to ensure it is always available.
+
+## Step 6: Install OpenClaw Skill (Optional)
 
 If you use OpenClaw, install the skill:
 
@@ -80,7 +104,7 @@ ls ~/.openclaw/workspace/skills/opensincera-cli/
 # Expected: SKILL.md  README.md  scripts/  examples/
 ```
 
-## Step 6: Test Skill Scripts
+## Step 7: Test Skill Scripts
 
 ```bash
 cd ~/.openclaw/workspace/skills/opensincera-cli
@@ -152,7 +176,11 @@ chmod +x scripts/*.sh
 npm uninstall -g opensincera-cli
 ```
 
-### Remove Skill
+### Remove Claude Code Integration
+
+Edit `~/.claude/CLAUDE.md` and remove the `opensincera-cli` section.
+
+### Remove OpenClaw Skill
 
 ```bash
 rm -rf ~/.openclaw/workspace/skills/opensincera-cli
@@ -168,11 +196,13 @@ Edit `~/.zshrc` and remove the `OPENSINCERA_API_KEY` line.
 cd ~/workspace/opensincera-cli
 git pull
 npm install -g .
-npm run install-skill  # Update skill if installed
+npm run install-claude-code  # Update Claude Code integration if installed
+npm run install-skill         # Update OpenClaw skill if installed
 ```
 
 ## Next Steps
 
 - Read [README.md](README.md) for usage examples
+- Read [skill/CLAUDE.md](skill/CLAUDE.md) for Claude Code integration
 - Read [skill/SKILL.md](skill/SKILL.md) for OpenClaw integration
 - Check [docs/API.md](docs/API.md) for API reference

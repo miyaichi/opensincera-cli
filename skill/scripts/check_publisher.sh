@@ -18,9 +18,13 @@ name=$(echo "$json" | jq -r '.name')
 verified=$(echo "$json" | jq -r '.visit_enabled')
 paths=$(echo "$json" | jq -r '.total_supply_paths')
 ratio=$(echo "$json" | jq -r '.avg_ads_to_content_ratio')
+mobile_a2cr=$(echo "$json" | jq -r '.device_level_metrics.mobile.avg_ads_to_content_ratio // "N/A"')
+desktop_a2cr=$(echo "$json" | jq -r '.device_level_metrics.desktop.avg_ads_to_content_ratio // "N/A"')
 
 echo "Publisher: $name"
 echo "Domain: $domain"
 echo "Verified: $([ "$verified" = "true" ] && echo "✓ Yes" || echo "✗ No")"
 echo "Supply Paths: $paths"
-echo "Ad/Content Ratio: $ratio"
+echo "Ad/Content Ratio (overall):  $ratio"
+echo "Ad/Content Ratio (mobile):   $mobile_a2cr"
+echo "Ad/Content Ratio (desktop):  $desktop_a2cr"

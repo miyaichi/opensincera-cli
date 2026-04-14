@@ -37,6 +37,25 @@ opensincera nytimes.com --csv
 opensincera nytimes.com --csv --header
 ```
 
+### Publisher ID Lookup
+
+```bash
+# Look up by OpenSincera publisher ID
+opensincera --id 75
+opensincera --id 75 --csv
+```
+
+### Device-Level Metrics
+
+```bash
+# JSON: device_level_metrics replaced by device_metrics for the selected device
+opensincera nytimes.com --device mobile
+opensincera --id 75 --device desktop
+
+# CSV: adds device, a2cr, avg_ad_units_in_view, avg_refresh_rate, pct_slots_with_refresh columns
+opensincera nytimes.com --device mobile --csv --header
+```
+
 ### Batch Processing
 
 ```bash
@@ -62,6 +81,18 @@ opensincera nytimes.com | jq -r '.visit_enabled'
 
 # Get supply path count
 opensincera nytimes.com | jq -r '.total_supply_paths'
+
+# Extract mobile A2CR
+opensincera nytimes.com | jq -r '.device_level_metrics.mobile.avg_ads_to_content_ratio'
+
+# Compare mobile vs desktop A2CR
+opensincera nytimes.com | jq '{
+  mobile_a2cr: .device_level_metrics.mobile.avg_ads_to_content_ratio,
+  desktop_a2cr: .device_level_metrics.desktop.avg_ads_to_content_ratio
+}'
+
+# Use --device to get a flat device_metrics object
+opensincera nytimes.com --device mobile | jq '.device_metrics'
 ```
 
 ## Publisher Selection Use Cases
@@ -95,10 +126,10 @@ fi
 
 ### 3. Check Ad Quality Metrics
 
-Assess ad-to-content ratio:
+Assess ad-to-content ratio (overall and by device):
 
 ```bash
-# Get ad-to-content ratio
+# Overall ad-to-content ratio
 ratio=$(opensincera "$domain" | jq -r '.avg_ads_to_content_ratio // 0')
 echo "$domain: Ad-to-Content Ratio = $ratio"
 
@@ -106,9 +137,23 @@ echo "$domain: Ad-to-Content Ratio = $ratio"
 if (( $(echo "$ratio > 0.3" | bc -l) )); then
   echo "⚠️  High ad density"
 fi
+
+# Mobile vs desktop A2CR comparison
+mobile=$(opensincera "$domain" | jq -r '.device_level_metrics.mobile.avg_ads_to_content_ratio // 0')
+desktop=$(opensincera "$domain" | jq -r '.device_level_metrics.desktop.avg_ads_to_content_ratio // 0')
+echo "$domain: mobile A2CR=$mobile, desktop A2CR=$desktop"
 ```
 
-### 4. Generate Publisher Report
+### 4. Check Device-Level Ad Refresh
+
+```bash
+# Check mobile refresh rate (higher = less aggressive refresh)
+mobile_refresh=$(opensincera "$domain" | jq -r '.device_level_metrics.mobile.average_refresh_rate // "N/A"')
+mobile_pct=$(opensincera "$domain" | jq -r '.device_level_metrics.mobile.percentage_of_ad_slots_with_refresh // 0')
+echo "$domain: mobile refresh=${mobile_refresh}s, ${mobile_pct}% of slots refreshing"
+```
+
+### 5. Generate Publisher Report
 
 Create a summary report for multiple domains:
 
@@ -210,6 +255,24 @@ cat domains.txt | while read domain; do
 done | sort -rn > quality_scores.txt
 ```
 
+### 4. Device-Level Batch Report
+
+```bash
+# Generate mobile and desktop A2CR report for multiple domains
+echo "domain,mobile_a2cr,desktop_a2cr,mobile_refresh_pct,desktop_refresh_pct" > device_report.csv
+cat domains.txt | while read domain; do
+  json=$(opensincera "$domain" 2>/dev/null)
+  if [ $? -eq 0 ]; then
+    m_a2cr=$(echo "$json" | jq -r '.device_level_metrics.mobile.avg_ads_to_content_ratio // ""')
+    d_a2cr=$(echo "$json" | jq -r '.device_level_metrics.desktop.avg_ads_to_content_ratio // ""')
+    m_pct=$(echo "$json" | jq -r '.device_level_metrics.mobile.percentage_of_ad_slots_with_refresh // ""')
+    d_pct=$(echo "$json" | jq -r '.device_level_metrics.desktop.percentage_of_ad_slots_with_refresh // ""')
+    echo "$domain,$m_a2cr,$d_a2cr,$m_pct,$d_pct" >> device_report.csv
+  fi
+  sleep 0.5
+done
+```
+
 ## Error Handling
 
 | Error | Meaning | Action |
@@ -243,9 +306,24 @@ done > results.csv
 | `visit_enabled` | boolean | Verification status (preferred: `true`) |
 | `total_supply_paths` | number | Established presence indicator |
 | `reseller_count` | number | Supply chain transparency |
-| `avg_ads_to_content_ratio` | number | Ad quality (lower is better) |
-| `avg_ads_in_view` | number | Inventory density |
+| `avg_ads_to_content_ratio` | number | Ad quality overall (lower is better) |
+| `avg_ads_in_view` | number | Inventory density overall |
+| `avg_ad_refresh` | number\|null | Ad refresh interval in seconds overall |
 | `status` | string | Publisher availability |
+
+### Device-Level Fields (`device_level_metrics.mobile` / `.desktop`)
+
+| Field | Type | Use Case |
+|-------|------|----------|
+| `avg_ads_to_content_ratio` | number\|null | A2CR for this device (lower is better) |
+| `avg_ad_units_in_view` | number\|null | Ads in viewport for this device |
+| `average_refresh_rate` | number\|null | Refresh interval in seconds for this device |
+| `percentage_of_ad_slots_with_refresh` | number | % of slots that refresh (0–100) |
+| `max_ads_to_content_ratio` | number\|null | Peak A2CR observed |
+| `max_ad_units_in_view` | number\|null | Peak ads in viewport |
+| `max_refresh_rate` / `min_refresh_rate` | number\|null | Refresh rate range |
+
+With `--device mobile|desktop`, JSON output replaces `device_level_metrics` with a flat `device_metrics` object and adds a `device` field.
 
 See [API Documentation](../docs/API.md) for full field list.
 
@@ -273,12 +351,16 @@ name=$(echo "$json" | jq -r '.name')
 verified=$(echo "$json" | jq -r '.visit_enabled')
 paths=$(echo "$json" | jq -r '.total_supply_paths')
 ratio=$(echo "$json" | jq -r '.avg_ads_to_content_ratio')
+mobile_a2cr=$(echo "$json" | jq -r '.device_level_metrics.mobile.avg_ads_to_content_ratio // "N/A"')
+desktop_a2cr=$(echo "$json" | jq -r '.device_level_metrics.desktop.avg_ads_to_content_ratio // "N/A"')
 
 echo "Publisher: $name"
 echo "Domain: $domain"
 echo "Verified: $([ "$verified" = "true" ] && echo "✓ Yes" || echo "✗ No")"
 echo "Supply Paths: $paths"
-echo "Ad/Content Ratio: $ratio"
+echo "Ad/Content Ratio (overall): $ratio"
+echo "Ad/Content Ratio (mobile):  $mobile_a2cr"
+echo "Ad/Content Ratio (desktop): $desktop_a2cr"
 ```
 
 ### scripts/batch_verify.sh

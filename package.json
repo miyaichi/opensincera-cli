@@ -1,6 +1,6 @@
 {
   "name": "opensincera-cli",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Command-line tool for querying OpenSincera publisher transparency data",
   "type": "module",
   "main": "src/index.js",
@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "node --test test/*.test.js",
-    "install-skill": "cp -r skill/ ~/.openclaw/workspace/skills/opensincera-cli/ && echo 'Skill installed to ~/.openclaw/workspace/skills/opensincera-cli/'"
+    "install-skill": "cp -r skill/ ~/.openclaw/workspace/skills/opensincera-cli/ && echo 'Skill installed to ~/.openclaw/workspace/skills/opensincera-cli/'",
+    "install-claude-code": "mkdir -p ~/.claude && cat skill/CLAUDE.md >> ~/.claude/CLAUDE.md && echo 'opensincera-cli appended to ~/.claude/CLAUDE.md'"
   },
   "keywords": [
     "opensincera",
